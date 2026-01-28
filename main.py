@@ -1,5 +1,7 @@
 import os
 import uuid
+import asyncio
+import httpx
 from datetime import datetime, timedelta
 from typing import List, Optional
 from fastapi import FastAPI, UploadFile, File, HTTPException, Request, Depends, status
@@ -9,15 +11,18 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlmodel import Field, SQLModel, Session, create_engine, select
 from passlib.context import CryptContext
 from jose import JWTError, jwt
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configuration
-SECRET_KEY = "your-secret-key-keep-it-safe" # In production, use an environment variable
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # 1 day
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-keep-it-safe")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 1440))
 
 # Database setup
-sqlite_file_name = "database.db"
-sqlite_url = f"sqlite:///{sqlite_file_name}"
+sqlite_url = os.getenv("DATABASE_URL", "sqlite:///database.db")
 engine = create_engine(sqlite_url, connect_args={"check_same_thread": False})
 
 # Auth setup
@@ -79,7 +84,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), session: Session
 app = FastAPI()
 
 # Ensure upload directories exist
-UPLOAD_DIR = "uploads"
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
 TEMP_DIR = os.path.join(UPLOAD_DIR, "temp")
 os.makedirs(TEMP_DIR, exist_ok=True)
 
@@ -89,8 +94,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 @app.on_event("startup")
-def on_startup():
+async def on_startup():
     create_db_and_tables()
+    asyncio.create_task(keep_alive())
 
 # Auth Endpoints
 @app.post("/register")
@@ -259,6 +265,10 @@ async def watch_video(request: Request, share_id: str, session: Session = Depend
     """
     return HTMLResponse(content=html_content)
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
 @app.get("/", response_class=HTMLResponse)
 async def index():
     with open("static/index.html", "r") as f:
@@ -268,6 +278,28 @@ async def index():
 async def auth_page():
     with open("static/auth.html", "r") as f:
         return HTMLResponse(content=f.read())
+
+async def keep_alive():
+    """Background task that pings the health endpoint every 10 minutes to prevent sleep"""
+    app_url = os.getenv("APP_URL")
+    
+    if not app_url:
+        print("ℹ Keep-alive disabled (APP_URL not set - running locally)")
+        return
+    
+    print(f"Keep-alive enabled - will ping {app_url}/health every 10 minutes")
+    await asyncio.sleep(60)  # Wait 1 minute before starting pings
+    
+    while True:
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"{app_url}/health", timeout=10.0)
+                print(f"✓ Keep-alive ping successful (status: {response.status_code})")
+        except Exception as e:
+            print(f"⚠ Keep-alive ping failed: {e}")
+        
+        # Wait 10 minutes before next ping
+        await asyncio.sleep(600)
 
 if __name__ == "__main__":
     import uvicorn
