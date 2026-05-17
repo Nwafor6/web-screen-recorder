@@ -262,9 +262,9 @@ startBtn.addEventListener('click', async () => {
         // Request webcam if enabled
         if (webcamEnabled.checked) {
             try {
-                webcamStream = await navigator.mediaDevices.getUserMedia({ 
+                webcamStream = await navigator.mediaDevices.getUserMedia({
                     video: { width: 320, height: 240 },
-                    audio: false 
+                    audio: false
                 });
             } catch (e) {
                 console.warn("Webcam access denied:", e);
@@ -279,32 +279,32 @@ startBtn.addEventListener('click', async () => {
         if (webcamStream) {
             const videoTrack = screenStream.getVideoTracks()[0];
             const settings = videoTrack.getSettings();
-            
+
             compositeCanvas.width = settings.width;
             compositeCanvas.height = settings.height;
-            
+
             const ctx = compositeCanvas.getContext('2d');
             const screenVideo = document.createElement('video');
             const webcamVideo = document.createElement('video');
-            
+
             screenVideo.srcObject = screenStream;
             webcamVideo.srcObject = webcamStream;
-            
+
             await screenVideo.play();
             await webcamVideo.play();
-            
+
             // Composite function
             const drawFrame = () => {
                 // Draw screen
                 ctx.drawImage(screenVideo, 0, 0, compositeCanvas.width, compositeCanvas.height);
-                
+
                 // Draw webcam in bottom-right corner (20% of screen width)
                 const webcamWidth = compositeCanvas.width * 0.2;
                 const webcamHeight = (webcamWidth * 3) / 4; // 4:3 aspect ratio
                 const padding = 20;
                 const x = compositeCanvas.width - webcamWidth - padding;
                 const y = compositeCanvas.height - webcamHeight - padding;
-                
+
                 // Draw webcam with border
                 ctx.strokeStyle = '#fff';
                 ctx.lineWidth = 3;
@@ -315,12 +315,12 @@ startBtn.addEventListener('click', async () => {
             };
             // Use setInterval instead of requestAnimationFrame to continue drawing when tab is inactive
             animationFrameId = setInterval(drawFrame, 1000 / 30); // 30 FPS
-            
+
             // Use canvas stream for preview and recording
             const canvasStream = compositeCanvas.captureStream(30);
             const audioTracks = tracks.filter(t => t.kind === 'audio');
             audioTracks.forEach(track => canvasStream.addTrack(track));
-            
+
             stream = canvasStream;
         } else {
             stream = new MediaStream(tracks);
