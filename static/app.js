@@ -24,8 +24,12 @@ const userNameDisplay = document.getElementById('user-name');
 const logoutBtn = document.getElementById('logout-btn');
 const videoNameInput = document.getElementById('video-name-input');
 const saveNameBtn = document.getElementById('save-name-btn');
+const webcamEnabled = document.getElementById('webcam-enabled');
+const compositeCanvas = document.getElementById('composite-canvas');
 
 let lastRecordedShareId = null;
+let webcamStream = null;
+let animationFrameId = null;
 
 // Auth Helpers
 function getToken() {
@@ -255,10 +259,73 @@ startBtn.addEventListener('click', async () => {
             console.warn("Microphone access denied:", e);
         }
 
+        // Request webcam if enabled
+        if (webcamEnabled.checked) {
+            try {
+                webcamStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 320, height: 240 },
+                    audio: false 
+                });
+            } catch (e) {
+                console.warn("Webcam access denied:", e);
+                alert("Webcam access denied. Recording will continue without webcam.");
+            }
+        }
+
         const tracks = [...screenStream.getTracks()];
         if (micStream) tracks.push(...micStream.getTracks());
 
-        stream = new MediaStream(tracks);
+        // If webcam is enabled, composite screen + webcam
+        if (webcamStream) {
+            const videoTrack = screenStream.getVideoTracks()[0];
+            const settings = videoTrack.getSettings();
+            
+            compositeCanvas.width = settings.width;
+            compositeCanvas.height = settings.height;
+            
+            const ctx = compositeCanvas.getContext('2d');
+            const screenVideo = document.createElement('video');
+            const webcamVideo = document.createElement('video');
+            
+            screenVideo.srcObject = screenStream;
+            webcamVideo.srcObject = webcamStream;
+            
+            await screenVideo.play();
+            await webcamVideo.play();
+            
+            // Composite function
+            const drawFrame = () => {
+                // Draw screen
+                ctx.drawImage(screenVideo, 0, 0, compositeCanvas.width, compositeCanvas.height);
+                
+                // Draw webcam in bottom-right corner (20% of screen width)
+                const webcamWidth = compositeCanvas.width * 0.2;
+                const webcamHeight = (webcamWidth * 3) / 4; // 4:3 aspect ratio
+                const padding = 20;
+                const x = compositeCanvas.width - webcamWidth - padding;
+                const y = compositeCanvas.height - webcamHeight - padding;
+                
+                // Draw webcam with border
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 3;
+                ctx.fillStyle = '#000';
+                ctx.fillRect(x - 2, y - 2, webcamWidth + 4, webcamHeight + 4);
+                ctx.drawImage(webcamVideo, x, y, webcamWidth, webcamHeight);
+                ctx.strokeRect(x, y, webcamWidth, webcamHeight);
+            };
+            // Use setInterval instead of requestAnimationFrame to continue drawing when tab is inactive
+            animationFrameId = setInterval(drawFrame, 1000 / 30); // 30 FPS
+            
+            // Use canvas stream for preview and recording
+            const canvasStream = compositeCanvas.captureStream(30);
+            const audioTracks = tracks.filter(t => t.kind === 'audio');
+            audioTracks.forEach(track => canvasStream.addTrack(track));
+            
+            stream = canvasStream;
+        } else {
+            stream = new MediaStream(tracks);
+        }
+
         preview.srcObject = stream;
         placeholder.style.display = 'none';
 
@@ -300,6 +367,14 @@ startBtn.addEventListener('click', async () => {
 
             // Stop all tracks
             stream.getTracks().forEach(track => track.stop());
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+                webcamStream = null;
+            }
+            if (animationFrameId) {
+                clearInterval(animationFrameId);
+                animationFrameId = null;
+            }
             preview.srcObject = null;
             placeholder.style.display = 'flex';
             timerDisplay.classList.remove('visible');

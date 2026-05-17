@@ -37,6 +37,13 @@
                 </div>
             </div>
 
+            <div class="webcam-toggle-wrapper">
+                <label class="webcam-toggle">
+                    <input type="checkbox" id="webcam-enabled">
+                    <span class="toggle-label">📹 Include Webcam</span>
+                </label>
+            </div>
+
             <div class="controls-bar">
                 <button id="start-btn" class="btn primary">
                     <span>Start Recording</span>
@@ -51,6 +58,7 @@
                     <span>Stop Recording</span>
                 </button>
             </div>
+            <canvas id="composite-canvas" style="display: none;"></canvas>
         </div>
 
         <div id="share-section" class="share-section">
