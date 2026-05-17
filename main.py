@@ -122,7 +122,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), session: Sessi
 
 @app.get("/me")
 async def read_users_me(current_user: User = Depends(get_current_user)):
-    return current_user
+    return {"id": current_user.id, "username": current_user.username}
 
 # Video Endpoints
 @app.post("/upload/start")
