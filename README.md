@@ -33,43 +33,57 @@ A privacy-focused, local-first screen recording web application with webcam over
 
 ## 🚀 Quick Start
 
-### 1. Clone the repository
+### Automated Setup (Recommended)
+
+```bash
+git clone https://github.com/Nwafor6/web-screen-recorder.git
+cd screen-recorder
+./scripts/setup.sh
+source venv/bin/activate
+python run.py
+```
+
+Then open **http://localhost:8000** in your browser.
+
+### Manual Setup
+
+#### 1. Clone the repository
 ```bash
 git clone https://github.com/Nwafor6/web-screen-recorder.git
 cd screen-recorder
 ```
 
-### 2. Create virtual environment
+#### 2. Create virtual environment
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-### 3. Install dependencies
+#### 3. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure environment
+#### 4. Configure environment
 ```bash
 cp .env.example .env
 ```
 
-**⚠️ IMPORTANT**: Edit `.env` and change `SECRET_KEY` to a secure random string:
+**⚠️ IMPORTANT**: Generate and set a secure `SECRET_KEY`:
 ```bash
-# Generate a secure key:
-python -c "import secrets; print(secrets.token_urlsafe(32))"
+python scripts/generate_secret_key.py
+# Copy the generated key to your .env file
 ```
 
-### 5. Run the application
+#### 5. Run the application
 ```bash
-python main.py
+python run.py
 ```
 
-### 6. Open in browser
+#### 6. Open in browser
 Navigate to: **http://localhost:8000**
 
-⚠️ **Must use `localhost`**
+⚠️ **Must use `localhost`** (not 127.0.0.1) for browser security
 
 ## 📖 Usage
 
@@ -95,17 +109,29 @@ Edit `.env` file for customization:
 
 ```
 screen-recorder/
-├── main.py              # FastAPI backend
-├── requirements.txt     # Python dependencies
-├── .env.example         # Environment template
-├── static/
-│   ├── index.html       # Main UI
-│   ├── auth.html        # Login/Register page
-│   ├── app.js           # Recording logic
-│   └── style.css        # Styling
-├── uploads/             # Recorded videos (gitignored)
-│   └── temp/            # Temporary chunks
-└── database.db          # SQLite database (gitignored)
+├── app/                    # Main application package
+│   ├── models/            # Database models (User, Video)
+│   ├── routes/            # API endpoints
+│   │   ├── auth.py        # Authentication routes
+│   │   ├── videos.py      # Video management routes
+│   │   └── pages.py       # HTML page routes
+│   ├── services/          # Business logic
+│   │   ├── auth.py        # Authentication service
+│   │   └── database.py    # Database connection
+│   ├── utils/             # Utility functions
+│   ├── config.py          # Configuration management
+│   └── main.py            # FastAPI app initialization
+├── static/                # Static assets
+│   ├── css/              # Stylesheets
+│   ├── js/               # JavaScript files
+│   └── html/             # HTML templates
+├── scripts/              # Helper scripts
+│   ├── setup.sh          # Automated setup script
+│   └── generate_secret_key.py  # Secret key generator
+├── uploads/              # User video uploads (gitignored)
+├── run.py                # Application entry point
+├── requirements.txt      # Python dependencies
+└── .env.example          # Environment template
 ```
 
 ## 🔧 Technical Details
@@ -114,7 +140,8 @@ screen-recorder/
 - FastAPI (Python web framework)
 - SQLModel + SQLite (database)
 - JWT authentication (python-jose)
-- Argon2 password hashing (passlib)
+- Argon2 password hashing (argon2-cffi)
+- Modular architecture with separate models, routes, and services
 
 **Frontend:**
 - Vanilla JavaScript (no framework dependencies)
@@ -131,11 +158,12 @@ screen-recorder/
 
 ## 🤝 Contributing
 
-Contributions welcome! Please feel free to submit issues and pull requests.
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
+**Quick contribution steps:**
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 

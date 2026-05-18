@@ -19,9 +19,6 @@ const copyBtn = document.getElementById('copy-btn');
 const placeholder = document.getElementById('placeholder');
 const historyList = document.getElementById('history-list');
 const refreshHistoryBtn = document.getElementById('refresh-history');
-const userProfile = document.getElementById('user-profile');
-const userNameDisplay = document.getElementById('user-name');
-const logoutBtn = document.getElementById('logout-btn');
 const videoNameInput = document.getElementById('video-name-input');
 const saveNameBtn = document.getElementById('save-name-btn');
 const webcamEnabled = document.getElementById('webcam-enabled');
@@ -30,68 +27,6 @@ const compositeCanvas = document.getElementById('composite-canvas');
 let lastRecordedShareId = null;
 let webcamStream = null;
 let animationFrameId = null;
-
-// Auth Helpers
-function getToken() {
-    return localStorage.getItem('token');
-}
-
-function setToken(token) {
-    localStorage.setItem('token', token);
-}
-
-function clearToken() {
-    localStorage.removeItem('token');
-}
-
-async function authFetch(url, options = {}) {
-    const token = getToken();
-    if (!token) {
-        window.location.href = '/auth';
-        return;
-    }
-
-    const headers = {
-        ...options.headers,
-        'Authorization': `Bearer ${token}`
-    };
-
-    const response = await fetch(url, { ...options, headers });
-
-    if (response.status === 401) {
-        clearToken();
-        window.location.href = '/auth';
-        return;
-    }
-
-    return response;
-}
-
-async function checkAuth() {
-    const token = getToken();
-    if (!token) {
-        window.location.href = '/auth';
-        return;
-    }
-
-    try {
-        const response = await authFetch('/me');
-        if (response && response.ok) {
-            const user = await response.json();
-            userNameDisplay.textContent = user.username;
-            userProfile.style.display = 'flex';
-            fetchHistory();
-        }
-    } catch (err) {
-        console.error("Auth check failed:", err);
-        window.location.href = '/auth';
-    }
-}
-
-logoutBtn.addEventListener('click', () => {
-    clearToken();
-    window.location.href = '/auth';
-});
 
 // Timer and History
 function updateTimer() {
@@ -104,7 +39,7 @@ function updateTimer() {
 
 async function fetchHistory() {
     try {
-        const response = await authFetch('/videos');
+        const response = await fetch('/videos');
         if (!response || !response.ok) return;
 
         const videos = await response.json();
@@ -196,7 +131,7 @@ window.editVideo = async (shareId, currentName, newNameFromInput = null) => {
     if (!newName || newName === currentName) return;
 
     try {
-        const response = await authFetch(`/videos/${shareId}?original_name=${encodeURIComponent(newName)}`, {
+        const response = await fetch(`/videos/${shareId}?original_name=${encodeURIComponent(newName)}`, {
             method: 'PATCH'
         });
         if (response && response.ok) {
@@ -214,7 +149,7 @@ window.deleteVideo = async (shareId) => {
     if (!confirm("Are you sure you want to delete this recording?")) return;
 
     try {
-        const response = await authFetch(`/videos/${shareId}`, { method: 'DELETE' });
+        const response = await fetch(`/videos/${shareId}`, { method: 'DELETE' });
         if (response && response.ok) {
             fetchHistory();
         } else {
@@ -239,7 +174,7 @@ startBtn.addEventListener('click', async () => {
         originalFileName = `recording_${new Date().toISOString().replace(/[:.]/g, '-')}.webm`;
 
         // Start upload session
-        const startResponse = await authFetch(`/upload/start?filename=${encodeURIComponent(originalFileName)}`, { method: 'POST' });
+        const startResponse = await fetch(`/upload/start?filename=${encodeURIComponent(originalFileName)}`, { method: 'POST' });
         if (!startResponse || !startResponse.ok) return;
 
         const startData = await startResponse.json();
@@ -336,7 +271,7 @@ startBtn.addEventListener('click', async () => {
         mediaRecorder.ondataavailable = async (event) => {
             if (event.data.size > 0 && currentShareId) {
                 // Upload chunk immediately
-                await authFetch(`/upload/chunk/${currentShareId}`, {
+                await fetch(`/upload/chunk/${currentShareId}`, {
                     method: 'POST',
                     body: event.data
                 });
@@ -347,7 +282,7 @@ startBtn.addEventListener('click', async () => {
             clearInterval(timerInterval);
 
             // Finalize upload
-            const finalizeResponse = await authFetch(`/upload/finalize/${currentShareId}?original_name=${encodeURIComponent(originalFileName)}`, { method: 'POST' });
+            const finalizeResponse = await fetch(`/upload/finalize/${currentShareId}?original_name=${encodeURIComponent(originalFileName)}`, { method: 'POST' });
             if (!finalizeResponse || !finalizeResponse.ok) return;
 
             const finalizeData = await finalizeResponse.json();
@@ -450,8 +385,8 @@ saveNameBtn.addEventListener('click', async () => {
     setTimeout(() => saveNameBtn.textContent = 'Rename', 2000);
 });
 
-// Initial auth check
-checkAuth();
+// Load video history on page load
+fetchHistory();
 
 copyBtn.addEventListener('click', () => {
     shareUrlInput.select();
