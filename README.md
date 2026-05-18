@@ -1,175 +1,97 @@
 # 🎥 Local Web Screen Recorder
 
-A privacy-focused, local-first screen recording web application with webcam overlay support. No cloud uploads, no tracking, all recordings stay on your machine.
+A simple weekend project for local screen recording with webcam overlay. Everything runs locally on your machine.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 
 ## ✨ Features
 
-- 🖥️ **Screen Recording** - Capture your entire screen or specific windows
+- 🖥️ **Screen Recording** - Capture your screen or specific windows
 - 🎙️ **Audio Support** - Record system audio and microphone
-- 📹 **Webcam Overlay** - Optional picture-in-picture webcam in recordings
-- 🔒 **100% Local** - All recordings stored locally, no cloud uploads
-- 👤 **User Authentication** - Secure JWT-based user accounts
-- 📊 **Recording History** - Track and manage your recordings
-- 🎬 **WebM Format** - High-quality VP9 video codec with Opus audio
-- 🔗 **Easy Sharing** - Generate shareable links for your recordings
-- ⏯️ **Pause/Resume** - Full control during recording
-- 🚀 **Tab-Safe Recording** - Continues recording even when you switch tabs
-
-## 🔒 Privacy & Security
-
-- **Local Storage**: All videos saved to your machine in `uploads/` directory
-- **No Telemetry**: Zero tracking, analytics, or external requests
-- **Secure Authentication**: Argon2 password hashing + JWT tokens
-- **HTTPS Ready**: Works on localhost or with HTTPS for secure context
+- 📹 **Webcam Overlay** - Optional picture-in-picture webcam
+- 🔒 **100% Local** - All recordings stored locally, no cloud, no tracking
+- 📊 **Recording History** - See and manage all your recordings
+- 🎬 **WebM Format** - VP9 video with Opus audio
+- 🔗 **Easy Sharing** - Shareable links for your local recordings
+- ⏯️ **Pause/Resume** - Control recording playback
 
 ## 📋 Requirements
 
-- Python 3.8 or higher
-- Modern web browser (Chrome, Edge, Firefox, Safari)
-- Must access via `http://localhost` or HTTPS (browser security requirement)
+- Python 3.8+
+- Modern web browser (Chrome, Edge, Firefox recommended)
 
 ## 🚀 Quick Start
 
-### Automated Setup (Recommended)
-
 ```bash
+# Clone and enter directory
 git clone https://github.com/Nwafor6/web-screen-recorder.git
 cd screen-recorder
-./scripts/setup.sh
-source venv/bin/activate
-python run.py
-```
 
-Then open **http://localhost:8000** in your browser.
-
-### Manual Setup
-
-#### 1. Clone the repository
-```bash
-git clone https://github.com/Nwafor6/web-screen-recorder.git
-cd screen-recorder
-```
-
-#### 2. Create virtual environment
-```bash
+# Setup virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
-#### 3. Install dependencies
-```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-#### 4. Configure environment
-```bash
-cp .env.example .env
-```
-
-**⚠️ IMPORTANT**: Generate and set a secure `SECRET_KEY`:
-```bash
-python scripts/generate_secret_key.py
-# Copy the generated key to your .env file
-```
-
-#### 5. Run the application
-```bash
+# Run the app
 python run.py
 ```
 
-#### 6. Open in browser
-Navigate to: **http://localhost:8000**
-
-⚠️ **Must use `localhost`** (not 127.0.0.1) for browser security
+Open **http://localhost:8000** and start recording!
 
 ## 📖 Usage
 
-1. **Register/Login** - Create an account on first visit
-2. **Toggle Webcam** (optional) - Check "📹 Include Webcam" for picture-in-picture overlay
-3. **Start Recording** - Click "Start Recording" and select what to share
-4. **Pause/Resume** - Control recording with pause/resume buttons
-5. **Stop & Save** - Click "Stop" to finalize and save your recording
-6. **Share** - Copy the generated share link or download the video
-
-## 🛠️ Configuration
-
-Edit `.env` file for customization:
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `SECRET_KEY` | JWT signing key (⚠️ MUST CHANGE!) | `your-secret-key-keep-it-safe` |
-| `ALGORITHM` | JWT algorithm | `HS256` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token lifetime | `1440` (24 hours) |
-| `DATABASE_URL` | Database location | `sqlite:///database.db` |
+1. **Toggle Webcam** (optional) - Check "📹 Include Webcam" for overlay
+2. **Start Recording** - Click button and select what to share
+3. **Pause/Resume** - Control recording as needed
+4. **Stop & Save** - Click "Stop" to save your recording
+5. **Share** - Copy the link or download the video
 
 ## 🏗️ Project Structure
 
 ```
 screen-recorder/
-├── app/                    # Main application package
-│   ├── models/            # Database models (User, Video)
+├── app/                    # Main application
+│   ├── models/            # Database models (Video)
 │   ├── routes/            # API endpoints
-│   │   ├── auth.py        # Authentication routes
-│   │   ├── videos.py      # Video management routes
-│   │   └── pages.py       # HTML page routes
+│   │   ├── videos.py      # Video upload/management
+│   │   └── pages.py       # HTML pages
 │   ├── services/          # Business logic
-│   │   ├── auth.py        # Authentication service
 │   │   └── database.py    # Database connection
-│   ├── utils/             # Utility functions
-│   ├── config.py          # Configuration management
-│   └── main.py            # FastAPI app initialization
-├── static/                # Static assets
+│   ├── utils/             # Utilities
+│   ├── config.py          # Configuration
+│   └── main.py            # FastAPI app
+├── static/                # Frontend assets
 │   ├── css/              # Stylesheets
-│   ├── js/               # JavaScript files
+│   ├── js/               # JavaScript
 │   └── html/             # HTML templates
-├── scripts/              # Helper scripts
-│   ├── setup.sh          # Automated setup script
-│   └── generate_secret_key.py  # Secret key generator
-├── uploads/              # User video uploads (gitignored)
-├── run.py                # Application entry point
-├── requirements.txt      # Python dependencies
-└── .env.example          # Environment template
+├── uploads/              # Recorded videos
+├── run.py                # Entry point
+└── requirements.txt      # Dependencies
 ```
 
-## 🔧 Technical Details
+## 🔧 Tech Stack
 
 **Backend:**
 - FastAPI (Python web framework)
 - SQLModel + SQLite (database)
-- JWT authentication (python-jose)
-- Argon2 password hashing (argon2-cffi)
-- Modular architecture with separate models, routes, and services
 
 **Frontend:**
-- Vanilla JavaScript (no framework dependencies)
+- Vanilla JavaScript
 - MediaRecorder API (screen capture)
 - Canvas API (webcam compositing)
-- WebM container (VP9 + Opus codecs)
-
-**Recording Process:**
-1. Captures screen via `getDisplayMedia()`
-2. Optional: Captures webcam via `getUserMedia()`
-3. If webcam enabled: Composites streams on canvas (30 FPS)
-4. Streams chunks to server during recording
-5. Finalizes and saves on stop
+- WebM/VP9/Opus codecs
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
-
-**Quick contribution steps:**
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+This is a simple weekend project, but contributions are welcome! Feel free to open issues or submit pull requests.
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](#) file for details.
+MIT License - see [LICENSE](LICENSE) for details.
+
 ---
 
-**⭐ If you find this useful, please consider giving it a star!**
+Made with ☕ as a weekend project
